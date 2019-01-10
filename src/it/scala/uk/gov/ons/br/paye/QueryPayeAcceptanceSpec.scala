@@ -47,7 +47,7 @@ class QueryPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       When(s"the PAYE unit with PAYE reference $TargetPayeRef is requested")
       val response = await(wsClient.url(s"/v1/paye/${TargetPayeRef.value}").get())
 
-      Then(s"a Not Found response is returned")
+      Then("a Not Found response is returned")
       response.status shouldBe NOT_FOUND
     }
   }
@@ -72,7 +72,7 @@ class QueryPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       When(s"the PAYE unit with PAYE reference $TargetPayeRef is requested")
       val response = await(wsClient.url(s"/v1/paye/${TargetPayeRef.value}").get())
 
-      Then(s"a server error is returned")
+      Then("a server error is returned")
       response.status shouldBe aServerError
     }
 
@@ -85,18 +85,18 @@ class QueryPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       When(s"the PAYE unit with PAYE reference $TargetPayeRef is requested")
       val response = await(wsClient.url(s"/v1/paye/${TargetPayeRef.value}").get())
 
-      Then(s"an Internal Server Error is returned")
+      Then("an Internal Server Error is returned")
       response.status shouldBe INTERNAL_SERVER_ERROR
     }
   }
 }
 
-object QueryPayeAcceptanceSpec extends HBaseJsonRequestBuilder with HBaseJsonBodyBuilder {
+private object QueryPayeAcceptanceSpec extends HBaseJsonRequestBuilder with HBaseJsonBodyBuilder {
   private val ColumnFamily = "d"
   private val TargetPayeRef = PayeRef("065H7Z31732")
   private val TargetPayeHBaseResponseBody =
     aBodyWith(
-      aRowWith(key = s"${TargetPayeRef.value}",
+      aRowWith(key = TargetPayeRef.value,
         // admin data
         aColumnWith(ColumnFamily, qualifier = "entref", value = "5235981614"),             // ignored field
         aColumnWith(ColumnFamily, qualifier = "payeref", value = TargetPayeRef.value),

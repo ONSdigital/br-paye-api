@@ -27,10 +27,10 @@ lazy val root = (project in file(".")).
       "-Ywarn-unused",
       "-P:silencer:pathFilters=[.*/Routes.scala]"
     ),
-    coverageExcludedPackages := "router\\..*;" +
-      ".*\\.controllers\\.javascript\\..*;" +
+    coverageExcludedPackages := "router\\.*;" +
+      ".*\\.controllers\\.javascript\\.*;" +
       ".*\\.controllers\\.Reverse.*Controller;" +
-      "uk\\.gov\\.ons\\.br\\.paye\\.modules\\.PayeQueryModule",
+      "uk\\.gov\\.ons\\.br\\.paye\\.modules\\.*",
     scapegoatVersion in ThisBuild := "1.3.8",
     scapegoatIgnoredFiles := Seq(".*/Routes.scala", ".*/ReverseRoutes.scala", ".*/JavaScriptReverseRoutes.scala"),
     // configure IntegrationTest
