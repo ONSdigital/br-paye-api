@@ -1,0 +1,55 @@
+<!-- https://www.playframework.com/documentation/latest/SettingsLogger -->
+<configuration>
+
+  <!-- see https://github.com/kamon-io/kamon-logback#logging-traceid -->
+  <conversionRule conversionWord="traceID" converterClass="kamon.logback.LogbackTraceIDConverter"/>
+
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${application.home:-.}/logs/application.log</file>
+    <encoder>
+      <pattern>%date %-5level [%traceID] [%logger{16}] - %m%n%xException{10}</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%date %highlight(%-5level) [%traceID] [%logger{16}] - %m%n%xException{10}</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="FILE" />
+  </appender>
+
+  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="STDOUT" />
+  </appender>
+
+  <logger name="play" level="INFO" />
+
+  <!-- default (not used by anything with a named logger e.g. if LazyLogging has been mixed-in) -->
+  <logger name="application" level="INFO" />
+
+  <!-- for request logging via AccessLoggingFilter -->
+  <logger name="access" level="INFO" />
+
+  <!-- for HBase repository logging (set to DEBUG to trace HBase database queries) -->
+  <logger name="hbase" level="INFO" />
+
+  <!-- the standard Play configuration turns these off -->
+  <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
+  <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="OFF" />
+  <logger name="com.avaje.ebeaninternal.server.lib.BackgroundThread" level="OFF" />
+  <logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF" />
+
+  <!-- root logger for Business Registers API library -->
+  <logger name="uk.gov.ons.br" level="INFO" />
+
+  <root level="INFO">
+    <appender-ref ref="ASYNCSTDOUT" />
+  </root>
+
+  <!-- clean shutdown -->
+  <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+</configuration>

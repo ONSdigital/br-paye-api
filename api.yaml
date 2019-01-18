@@ -1,0 +1,200 @@
+openapi: 3.0.2
+info:
+  title: Business Registers PAYE Service
+  description: Paye As You Earn (PAYE) Admin Data for Business Registers.
+  contact:
+    name: Business Registers
+  license:
+    name: MIT License
+    url: 'https://github.com/ONSdigital/br-paye-api/blob/feature/REG-2369_paye_service/LICENSE'
+  version: 0.1.0
+servers:
+- url: 'http://localhost:9000'
+  description: Local Development Server
+paths:
+  '/v1/paye/{payeref}':
+    get:
+      tags:
+      - Query
+      summary: Find PAYE Admin Unit by PAYE Reference
+      description: Returns the single PAYE Admin Unit identified by the supplied PAYE Reference
+      operationId: getPayeByReference
+      parameters:
+      - name: payeref
+        in: path
+        description: PAYE Reference of the Admin Unit to retrieve
+        required: true
+        schema:
+          type: string
+          minLength: 4
+          maxLength: 12
+          pattern: '^[a-zA-Z0-9]{4,12}$'
+        example: '065H7Z31732'
+      responses:
+        '200':
+          description: the Admin Unit was found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paye'
+              examples:
+                minimal:
+                  summary: A minimal PAYE response
+                  value:
+                    payeref: '065H7Z31732'
+                    name: 'Big Box Cereal Limited'
+                    legalStatus: 'A'
+                    address:
+                      line1: 'Lane Top Farm'
+                      postcode: 'SS5 4PR'
+        '400':
+          description: the supplied PAYE Reference does not adhere to the expected format
+        '404':
+          description: the Admin Unit was not found
+        '500':
+          description: an error has occurred
+        '504':
+          description: a response was not received from the database within the required time interval
+components:
+  schemas:
+    Paye:
+      description: Represents PAYE Admin Data
+      type: object
+      required:
+      - payeref
+      - name
+      - legalStatus
+      - address
+      properties:
+        payeref:
+          type: string
+          example: '065H7Z31732'
+        name:
+          type: string
+          example: 'Big Box Cereal Limited'
+        tradingStyle:
+          type: string
+          example: 'Big Box Cereal'
+        legalStatus:
+          type: string
+          example: 'A'
+        stc:
+          type: string
+          example: '6616'
+        previousPayeref:
+          type: string
+          example: '043F5X19510'
+        employerCategory:
+          type: string
+          example: '9'
+        actionDate:
+          type: string
+          format: ddmmyyyy-date
+          example: '01/02/2018'
+        lifespan:
+          $ref: '#/components/schemas/Lifespan'
+        jobs:
+          $ref: '#/components/schemas/Jobs'
+        employeeSplits:
+          $ref: '#/components/schemas/EmployeeSplits'
+        address:
+          $ref: '#/components/schemas/Address'  
+        links:
+          $ref: '#/components/schemas/LinkToLegalUnit'
+    Lifespan:
+      description: Birth & death information
+      type: object
+      required:
+      - birthDate
+      properties:
+        birthDate:
+          type: string
+          format: ddmmyyyy-date
+          example: '05/06/2015'
+        deathDate:
+          type: string
+          format: ddmmyyyy-date
+          example: '09/10/2018'
+        deathCode:
+          type: string
+          example: '658664'
+    Jobs:
+      description: Jobs count observations
+      type: object
+      properties:
+        mar:
+          type: integer
+          example: 1
+        jun:
+          type: integer
+          example: 8
+        sep:
+          type: integer
+          example: 9
+        dec:
+          type: integer
+          example: 6
+        lastUpdated:
+          type: string
+          format: ddmmyyyy-date
+          example: '01/01/2018'
+    EmployeeSplits:
+      description: Employee counts by category splits
+      type: object
+      properties:
+        mfullemp:
+          type: integer
+          example: 9
+        msubemp:
+          type: integer
+          example: 5
+        ffullemp: 
+          type: integer
+          example: 8
+        fsubemp:
+          type: integer
+          example: 2
+        unclemp:
+          type: integer
+          example: 3
+        unclsubemp:
+          type: integer
+          example: 5
+    Address:
+      description: The unit address
+      type: object
+      required:
+      - line1
+      - postcode
+      properties:
+        line1:
+          type: string
+          example: 'Lane Top Farm'
+        line2:
+          type: string
+          example: '1 Bottom Lane'
+        line3:
+          type: string
+          example: 'Blackshaw Head'
+        line4:
+          type: string
+          example: 'Hebden Bridge'
+        line5:
+          type: string
+          example: 'West Yorkshire'
+        postcode:
+          type: string
+          example: 'SS5 4PR'
+    LinkToLegalUnit:
+      description: Links to parent units
+      type: object
+      required:
+      - ubrn
+      properties:
+        ubrn:
+          description: The UBRN of the parent Legal Unit
+          type: string
+          minLength: 16
+          maxLength: 16
+          pattern: '^[0-9]{16}$'
+          example: '1000012345000999'
