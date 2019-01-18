@@ -10,9 +10,9 @@ pipeline {
     libraries {
         lib('jenkins-pipeline-shared')
     }
-     environment {
+    environment {
         SVC_NAME = "br-paye-api"
-        ORG = "BR"
+        ORG = "SBR"
     }
     options {
         skipDefaultCheckout()
@@ -25,7 +25,7 @@ pipeline {
         stage('Checkout') {
             agent { label 'download.jenkins.slave' }
             steps {
-                checkout scm        
+                checkout scm
                 script {
                     buildInfo.name = "${SVC_NAME}"
                     buildInfo.number = "${BUILD_NUMBER}"
@@ -104,10 +104,10 @@ pipeline {
 
         stage ('Publish') {
             agent { label "build.${agentSbtVersion}" }
-            when { 
-                branch "master" 
+            when {
+                branch "master"
                 // evaluate the when condition before entering this stage's agent, if any
-                beforeAgent true 
+                beforeAgent true
             }
             steps {
                 colourText("info", "Building ${env.BUILD_ID} on ${env.JENKINS_URL} from branch ${env.BRANCH_NAME}")
@@ -137,13 +137,13 @@ pipeline {
 
         stage('Deploy: Dev'){
             agent { label 'deploy.cf' }
-            when { 
+            when {
                 branch "master"
                 // evaluate the when condition before entering this stage's agent, if any
-                beforeAgent true 
+                beforeAgent true
             }
             environment{
-                CREDS = 's_jenkins_sbr_dev'
+                CREDS = 's_jenkins_br_dev'
                 SPACE = 'Dev'
             }
             steps {
@@ -161,7 +161,7 @@ pipeline {
                     sh "mv ${distDir}*.zip ${distDir}${env.SVC_NAME}.zip"
                 }
                 dir('config') {
-                    git url: "${GITLAB_URL}/StatBusReg/${env.SVC_NAME}.git", credentialsId: 'JenkinsSBR__gitlab'
+                    git url: "${GITLAB_URL}/BusinessRegister/${env.SVC_NAME}.git", credentialsId: 'JenkinsBR__gitlab'
                 }
                 lock("${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"){
                     script {
@@ -189,13 +189,13 @@ pipeline {
 
         stage('Deploy: Test'){
             agent { label 'deploy.cf' }
-            when { 
+            when {
                 branch "master"
                 // evaluate the when condition before entering this stage's agent, if any
-                beforeAgent true 
+                beforeAgent true
             }
             environment{
-                CREDS = 's_jenkins_sbr_test'
+                CREDS = 's_jenkins_br_test'
                 SPACE = 'Test'
             }
             steps {
@@ -213,7 +213,7 @@ pipeline {
                     sh "mv ${distDir}*.zip ${distDir}${env.SVC_NAME}.zip"
                 }
                 dir('config') {
-                    git url: "${GITLAB_URL}/StatBusReg/${env.SVC_NAME}.git", credentialsId: 'JenkinsSBR__gitlab'
+                    git url: "${GITLAB_URL}/BusinessRegister/${env.SVC_NAME}.git", credentialsId: 'JenkinsBR__gitlab'
                 }
                 lock("${this.env.SPACE.toLowerCase()}-${this.env.SVC_NAME}"){
                     script {
@@ -244,22 +244,22 @@ pipeline {
         success {
             colourText("success", "All stages complete. Build was successful.")
             slackSend(
-                color: "good",
-                message: "${env.JOB_NAME} success: ${env.RUN_DISPLAY_URL}"
+                    color: "good",
+                    message: "${env.JOB_NAME} success: ${env.RUN_DISPLAY_URL}"
             )
         }
         unstable {
             colourText("warn", "Something went wrong, build finished with result ${currentResult}. This may be caused by failed tests, code violation or in some cases unexpected interrupt.")
             slackSend(
-                color: "warning",
-                message: "${env.JOB_NAME} unstable: ${env.RUN_DISPLAY_URL}"
+                    color: "warning",
+                    message: "${env.JOB_NAME} unstable: ${env.RUN_DISPLAY_URL}"
             )
         }
         failure {
             colourText("warn","Process failed at: ${env.NODE_STAGE}")
             slackSend(
-                color: "danger",
-                message: "${env.JOB_NAME} failed at ${env.STAGE_NAME}: ${env.RUN_DISPLAY_URL}"
+                    color: "danger",
+                    message: "${env.JOB_NAME} failed at ${env.STAGE_NAME}: ${env.RUN_DISPLAY_URL}"
             )
         }
     }
