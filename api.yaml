@@ -39,12 +39,12 @@ paths:
                 minimal:
                   summary: A minimal PAYE response
                   value:
-                    payeref: 065H7Z31732
-                    name: Big Box Cereal Limited
-                    legalStatus: A
+                    payeref: '065H7Z31732'
+                    name: 'Big Box Cereal Limited'
+                    legalStatus: 'A'
                     address:
-                      line1: Lane Top Farm
-                      postcode: SS5 4PR
+                      line1: 'Lane Top Farm'
+                      postcode: 'SS5 4PR'
         '400':
           description: the supplied PAYE Reference does not adhere to the expected format
         '404':
@@ -106,36 +106,36 @@ components:
       description: Represents PAYE Admin Data
       type: object
       required:
-        - payeref
-        - name
-        - legalStatus
-        - address
+      - payeref
+      - name
+      - legalStatus
+      - address
       properties:
         payeref:
           type: string
-          example: 065H7Z31732
+          example: '065H7Z31732'
         name:
           type: string
-          example: Big Box Cereal Limited
+          example: 'Big Box Cereal Limited'
         tradingStyle:
           type: string
-          example: Big Box Cereal
+          example: 'Big Box Cereal'
         legalStatus:
           type: string
-          example: A
+          example: 'A'
         stc:
           type: string
           example: '6616'
         previousPayeref:
           type: string
-          example: 043F5X19510
+          example: '043F5X19510'
         employerCategory:
           type: string
           example: '9'
         actionDate:
           type: string
           format: ddmmyyyy-date
-          example: 01/02/2018
+          example: '01/02/2018'
         lifespan:
           $ref: '#/components/schemas/Lifespan'
         jobs:
@@ -155,11 +155,11 @@ components:
         birthDate:
           type: string
           format: ddmmyyyy-date
-          example: 05/06/2015
+          example: '05/06/2015'
         deathDate:
           type: string
           format: ddmmyyyy-date
-          example: 09/10/2018
+          example: '09/10/2018'
         deathCode:
           type: string
           example: '658664'
@@ -182,7 +182,7 @@ components:
         lastUpdated:
           type: string
           format: ddmmyyyy-date
-          example: 01/01/2018
+          example: '01/01/2018'
     EmployeeSplits:
       description: Employee counts by category splits
       type: object
@@ -214,22 +214,22 @@ components:
       properties:
         line1:
           type: string
-          example: Lane Top Farm
+          example: 'Lane Top Farm'
         line2:
           type: string
-          example: 1 Bottom Lane
+          example: '1 Bottom Lane'
         line3:
           type: string
-          example: Blackshaw Head
+          example: 'Blackshaw Head'
         line4:
           type: string
-          example: Hebden Bridge
+          example: 'Hebden Bridge'
         line5:
           type: string
-          example: West Yorkshire
+          example: 'West Yorkshire'
         postcode:
           type: string
-          example: SS5 4PR
+          example: 'SS5 4PR'
     LinkToLegalUnit:
       description: Links to parent units
       type: object

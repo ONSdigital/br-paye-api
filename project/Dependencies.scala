@@ -7,7 +7,7 @@ object Dependencies {
   lazy val kamonPlay = "io.kamon" %% "kamon-play-2.6" % "1.1.1"
   lazy val kamonZipkin = "io.kamon" %% "kamon-zipkin" % "1.0.0"
   lazy val registersApi = "uk.gov.ons" %% "br-api-common" % "0.1.0-SNAPSHOT"
-  lazy val registersApiTest = "uk.gov.ons" %% "br-api-test-common" % "0.1.0-SNAPSHOT"
+  lazy val registersApiTest = "uk.gov.ons" %% "br-api-test-common" % "1.2"
   lazy val scalaMock = "org.scalamock" %% "scalamock" % "4.1.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4"
   lazy val scalaTestPlus = "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2"

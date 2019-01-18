@@ -1,5 +1,6 @@
 package uk.gov.ons.br.paye.repository.hbase
 
+
 import org.slf4j.Logger
 import uk.gov.ons.br.models.{Address, Lifespan, LinkToLegalUnit}
 import uk.gov.ons.br.paye.models.{EmployeeSplits, Jobs, Paye, PayeRef}
