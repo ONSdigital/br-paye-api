@@ -12,6 +12,7 @@ lazy val root = (project in file(".")).
       version      := "0.1.0-SNAPSHOT"
     )),
     name := "br-paye-api",
+    resolvers += Resolver.bintrayRepo("ons", "ONS-Registers"),
     scalacOptions ++= Seq(
       "-target:jvm-1.8",
       "-encoding", "utf8",
