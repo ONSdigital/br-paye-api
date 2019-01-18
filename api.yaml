@@ -1,35 +1,33 @@
 openapi: 3.0.2
 info:
   title: Business Registers PAYE Service
-  description: Paye As You Earn (PAYE) Admin Data for Business Registers.
+  description: Paye As You Earn (PAYE) Admin Data for Business Registers
   contact:
     name: Business Registers
   license:
     name: MIT License
-    url: 'https://github.com/ONSdigital/br-paye-api/blob/feature/REG-2369_paye_service/LICENSE'
-  version: 0.1.0
+    url: >-
+      https://github.com/ONSdigital/br-paye-api/blob/master/LICENSE
+  version: 0.2.0
 servers:
-- url: 'http://localhost:9000'
-  description: Local Development Server
+  - url: 'http://localhost:9000'
+    description: Local Development Server
 paths:
   '/v1/paye/{payeref}':
     get:
       tags:
-      - Query
+        - Query
       summary: Find PAYE Admin Unit by PAYE Reference
-      description: Returns the single PAYE Admin Unit identified by the supplied PAYE Reference
+      description: >-
+        Returns the single PAYE Admin Unit identified by the supplied PAYE Reference
       operationId: getPayeByReference
       parameters:
-      - name: payeref
-        in: path
-        description: PAYE Reference of the Admin Unit to retrieve
-        required: true
-        schema:
-          type: string
-          minLength: 4
-          maxLength: 12
-          pattern: '^[a-zA-Z0-9]{4,12}$'
-        example: '065H7Z31732'
+        - name: payeref
+          in: path
+          description: PAYE Reference of the Admin Unit to retrieve
+          required: true
+          schema:
+            $ref: '#/components/schemas/PayeReference'
       responses:
         '200':
           description: the Admin Unit was found
@@ -54,7 +52,54 @@ paths:
         '500':
           description: an error has occurred
         '504':
-          description: a response was not received from the database within the required time interval
+          description: >-
+            a response was not received from the database within the required
+            time interval
+    patch:
+      tags:
+        - Edit
+      summary: Clerically edit a PAYE Admin Unit by PAYE Reference
+      description: >-
+        Applies a Json Patch specifying edits to the PAYE Admin Unit identified by the supplied PAYE Reference.  The application restricts which fields can be edited.
+      operationId: patchPayeByReference
+      parameters:
+        - name: payeref
+          in: path
+          description: PAYE Reference of the Admin Unit to edit
+          required: true
+          schema:
+            $ref: '#/components/schemas/PayeReference'
+      requestBody:
+        description: A Json Patch Specification (RFC6902)
+        content:
+          application/json-patch+json:
+            schema:
+              $ref: '#/components/schemas/PatchSpecification'
+            example:
+              - op: test
+                path: /links/ubrn
+                value: '1234567890123456'
+              - op: replace
+                path: /links/ubrn
+                value: '6543210987654321'
+        required: true
+      responses:
+        '204': 
+          description: the edit was applied successfully
+        '400': 
+          description: >- 
+            the supplied PAYE Reference does not adhere to the expected format; or the request body does not comply with the Json Patch specification   
+        '404':
+          description: the Admin Unit was not found
+        '409':
+          description: the edit conflicts with a change made by another user
+        '415':
+          description: the request content type is not that of Json Patch
+        '422':
+          description: >-
+            while the request body is a valid Json Patch specification, it does not describe a clerical edit that is supported for PAYE admin units
+        '500':
+          description: an error has occurred
 components:
   schemas:
     Paye:
@@ -98,14 +143,14 @@ components:
         employeeSplits:
           $ref: '#/components/schemas/EmployeeSplits'
         address:
-          $ref: '#/components/schemas/Address'  
+          $ref: '#/components/schemas/Address'
         links:
           $ref: '#/components/schemas/LinkToLegalUnit'
     Lifespan:
       description: Birth & death information
       type: object
       required:
-      - birthDate
+        - birthDate
       properties:
         birthDate:
           type: string
@@ -148,7 +193,7 @@ components:
         msubemp:
           type: integer
           example: 5
-        ffullemp: 
+        ffullemp:
           type: integer
           example: 8
         fsubemp:
@@ -164,8 +209,8 @@ components:
       description: The unit address
       type: object
       required:
-      - line1
-      - postcode
+        - line1
+        - postcode
       properties:
         line1:
           type: string
@@ -189,7 +234,7 @@ components:
       description: Links to parent units
       type: object
       required:
-      - ubrn
+        - ubrn
       properties:
         ubrn:
           description: The UBRN of the parent Legal Unit
@@ -198,3 +243,41 @@ components:
           maxLength: 16
           pattern: '^[0-9]{16}$'
           example: '1000012345000999'
+    PayeReference:
+      description: unique PAYE Reference
+      type: string
+      minLength: 4
+      maxLength: 12
+      pattern: '^[a-zA-Z0-9]{4,12}$'
+      example: '065H7Z31732'
+    PatchSpecification:
+      description: >- 
+        An array of operations to be applied as a patch to a Json document in accordance with RFC6902
+      type: array
+      items:
+        $ref: '#/components/schemas/PatchOperation'
+    PatchOperation:
+      description: >-
+        Defines an operation to be applied as part of a Json patch.
+        Note that we currently support only a limited subset of the operations defined by the specification, and all of the operations that we do support require a value property.
+      type: object
+      required:
+        - op
+        - path
+        - value
+      properties:
+        op:
+          type: string
+          description: the operation type
+          enum:
+            - test
+            - replace
+          example: test
+        path:
+          type: string
+          description: the document path targeted by this operation
+          example: 'links/ubrn'
+        value:
+          $ref: '#/components/schemas/AnyValue'
+    AnyValue:
+      description: Any Json structure - string, number, boolean, array or object

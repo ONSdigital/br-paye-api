@@ -115,11 +115,20 @@ Generate static analysis report:
         curl -i http://localhost:9000/v1/paye/054G6Y20621
         curl -i http://localhost:9000/v1/paye/076I8A42843
 
-7.  Shutdown This Service
+7.  Clerically edit a unit (modifying the existing UBRN)
+
+        curl -i \
+        -H "Content-Type: application/json-patch+json" \
+        -d '[{"op": "test", "path": "/links/ubrn", "value": "076I8A42843-ubrn"},
+             {"op": "replace", "path": "/links/ubrn", "value": "1234567890123456"}]' \
+        -X PATCH \
+        "http://localhost:9000/v1/paye/076I8A42843"
+
+8.  Shutdown This Service
 
     Terminate the running command (typically Ctrl-C).
 
-8.  TearDown Database
+9.  TearDown Database
 
     Delete the table:
 
@@ -130,13 +139,19 @@ Generate static analysis report:
 
         drop_namespace 'br_paye_db'
 
-9.  Shutdown HBase REST Service
+10.  Shutdown HBase REST Service
 
         bin/hbase rest stop
 
-10.  Shutdown HBase
+11.  Shutdown HBase
 
          bin/hbase stop-hbase.sh
+
+
+### API Specification
+The `api.yaml` file in the root project directory documents the API using the [Open API Specification](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md).
+This file is best edited using [Swagger Editor](https://github.com/swagger-api/swagger-editor) and best viewed using [Swagger UI](https://github.com/swagger-api/swagger-ui/).
+The Docker approach outlined [here](https://github.com/swagger-api/swagger-editor#docker) seems to work well.
 
 
 ### Tracing

@@ -1,5 +1,6 @@
 package uk.gov.ons.br.paye.repository.hbase
 
+
 import org.slf4j.Logger
 import uk.gov.ons.br.models.{Address, Lifespan, LinkToLegalUnit}
 import uk.gov.ons.br.paye.models.{EmployeeSplits, Jobs, Paye, PayeRef}
@@ -27,8 +28,6 @@ import scala.util.Try
  * for us.
  */
 private[hbase] object Columns {
-  private val columnNameForQualifier: String => String = HBaseColumn.name(family = "d")
-
   val payeref = columnNameForQualifier("payeref")
   val legalStatus = columnNameForQualifier("legalstatus")
   val previousPayeref = columnNameForQualifier("prevpaye")
@@ -75,7 +74,7 @@ private[hbase] object Columns {
   }
 
   object Links {
-    val ubrn = columnNameForQualifier("ubrn")
+    val ubrn = HBaseColumn.name(ParentLinkColumn)
   }
 }
 
