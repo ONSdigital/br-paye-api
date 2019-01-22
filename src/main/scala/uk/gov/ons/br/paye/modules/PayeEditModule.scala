@@ -42,8 +42,8 @@ class PayeEditModule extends AbstractModule {
 
   @Provides
   @Singleton
-  def providesJsonPatchBodyParser(@Inject() bodyParsers: PlayBodyParsers, ec: ExecutionContext): BodyParser[Patch] =
-    new JsonPatchBodyParser(bodyParsers.tolerantJson)(ec)
+  def providesJsonPatchBodyParser(@Inject() bodyParsers: PlayBodyParsers)(implicit ec: ExecutionContext): BodyParser[Patch] =
+    new JsonPatchBodyParser(bodyParsers.tolerantJson)
 
   @Provides
   @Singleton

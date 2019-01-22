@@ -53,7 +53,8 @@ lazy val root = (project in file(".")).
       registersApiTest % s"$Test,$IntegrationTest",
       scalaMock % s"$Test,$IntegrationTest",
       scalaTest % Test,
-      scalaTestPlus % Test
+      scalaTestPlus % Test,
+      wireMock % IntegrationTest
     ),
     dependencyOverrides ++= Seq(
       // ensure jetty is the version required by wiremock

@@ -49,7 +49,7 @@ Generate static analysis report:
 
     followed by the table:
 
-        create 'br_paye_db:paye', 'd'
+        create 'br_paye_db:paye', 'd', 'h'
 
 3.  Create Sample Data
 
@@ -119,6 +119,7 @@ Generate static analysis report:
 
         curl -i \
         -H "Content-Type: application/json-patch+json" \
+        -H "X-User-Id: bloggsj" \
         -d '[{"op": "test", "path": "/links/ubrn", "value": "076I8A42843-ubrn"},
              {"op": "replace", "path": "/links/ubrn", "value": "1234567890123456"}]' \
         -X PATCH \
@@ -192,3 +193,20 @@ that is defined at `src/it/resources/it_application.conf`.  This imports the sta
 overrides the environment to that expected by locally executing acceptance tests.  This allows us to specify
 non-standard ports for example, to avoid conflicts with locally running services.  For this to work, the
 build file overrides the `-Dconfig.resource` setting when executing the IntegrationTest phase.
+
+
+### Edit History
+A history of edits is maintained in a separate 'h' column family.
+
+For each edit a new history cell is created.  The column name of this cell is a UUID, and the cell value
+has the format:
+
+    {userId}~{iso-local-date-time}~{old-ubrn}~{new-ubrn}
+
+For example:
+
+    column=h:90731d6b-d98f-450b-871d-806d13901953,
+    value=bloggsj~2019-01-23T09:22:39.264~1234567890123456~9999999999999999
+
+Metadata for the edit (currently the editedBy userId) must be supplied by HTTP Headers (currently `X-User-Id`).
+Any `PATCH` request without the required metadata headers will receive a `Bad Request (400)` response.
