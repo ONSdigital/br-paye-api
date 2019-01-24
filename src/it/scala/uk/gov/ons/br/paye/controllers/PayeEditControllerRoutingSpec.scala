@@ -8,6 +8,7 @@ import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{route, _}
+import uk.gov.ons.br.actions.EditAction.UserIdHeaderName
 import uk.gov.ons.br.parsers.JsonPatchBodyParser.JsonPatchMediaType
 import uk.gov.ons.br.paye.models.PayeRef
 import uk.gov.ons.br.services.PatchService
@@ -48,7 +49,7 @@ class PayeEditControllerRoutingSpec extends UnitSpec with GuiceOneAppPerTest wit
 
     def fakeRequestTo(uri: String): FakeRequest[String] =
       FakeRequest(method = PATCH, path = uri).
-        withHeaders(CONTENT_TYPE -> JsonPatchMediaType).
+        withHeaders(CONTENT_TYPE -> JsonPatchMediaType, UserIdHeaderName -> "auser").
         withBody("""[{"op": "test", "path": "/links/ubrn", "value": "old-ubrn"}]""")
   }
 

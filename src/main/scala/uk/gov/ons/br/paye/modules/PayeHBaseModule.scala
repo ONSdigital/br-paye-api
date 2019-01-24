@@ -1,5 +1,7 @@
 package uk.gov.ons.br.paye.modules
 
+import java.time.Clock
+
 import com.github.ghik.silencer.silent
 import com.google.inject.{AbstractModule, Provides, TypeLiteral}
 import javax.inject.Inject
@@ -9,10 +11,10 @@ import play.api.{Configuration, Environment}
 import uk.gov.ons.br.config.HBaseRestRepositoryConfigLoader
 import uk.gov.ons.br.models.Ubrn
 import uk.gov.ons.br.paye.models.{Paye, PayeRef}
-import uk.gov.ons.br.paye.repository.hbase.{ParentLinkColumn, PayeHBaseRowKey, PayeHBaseRowMapper}
-import uk.gov.ons.br.repository.{CommandRepository, QueryRepository}
-import uk.gov.ons.br.repository.hbase.rest.{HBaseRestData, HBaseRestRepository, HBaseRestRepositoryConfig}
+import uk.gov.ons.br.paye.repository.hbase.{EditHistoryColumnFamily, ParentLinkColumn, PayeHBaseRowKey, PayeHBaseRowMapper}
 import uk.gov.ons.br.repository.hbase._
+import uk.gov.ons.br.repository.hbase.rest.{HBaseRestData, HBaseRestRepository, HBaseRestRepositoryConfig}
+import uk.gov.ons.br.repository.{CommandRepository, QueryRepository}
 
 import scala.concurrent.ExecutionContext
 
@@ -41,6 +43,7 @@ class PayeHBaseModule(@silent environment: Environment, configuration: Configura
 
     bind(new TypeLiteral[Reads[Seq[HBaseRow]]]() {}).toInstance(HBaseRestData.format)
     bind(classOf[HBaseRepository]).to(classOf[HBaseRestRepository])
+    bind(classOf[Clock]).toInstance(Clock.systemUTC())
     ()  // explicitly return unit to avoid warning about disregarded return value
   }
 
@@ -51,7 +54,14 @@ class PayeHBaseModule(@silent environment: Environment, configuration: Configura
     new HBaseQueryRepository[PayeRef, Paye](hBase, PayeHBaseRowMapper, PayeHBaseRowKey)(ec, hBaseLogger)
 
   @Provides
-  def providesCommandRepository(@Inject() hBase: HBaseRepository): CommandRepository[PayeRef, Ubrn] =
-    // Note static binding to ubrn.toString & ubrn column name here
-    new HBaseCommandRepository[PayeRef, Ubrn](hBase, PayeHBaseRowKey, ubrn => ubrn.value, ParentLinkColumn)(hBaseLogger)
+  def providesCommandRepository(@Inject() hBase: HBaseRepository, clock: Clock): CommandRepository[PayeRef, Ubrn] =
+    // Note static binding to a UBRN => String converter & the UBRN column name here
+    new HBaseCommandRepository[PayeRef, Ubrn](
+      hBase,
+      PayeHBaseRowKey,
+      makeParentValue = ubrn => ubrn.value,
+      ParentLinkColumn,
+      HBaseEditHistoryIdMaker(EditHistoryColumnFamily),
+      clock
+    )(hBaseLogger)
 }

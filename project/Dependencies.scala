@@ -6,13 +6,14 @@ object Dependencies {
   lazy val kamonLogback = "io.kamon" %% "kamon-logback" % "1.0.3"
   lazy val kamonPlay = "io.kamon" %% "kamon-play-2.6" % "1.1.1"
   lazy val kamonZipkin = "io.kamon" %% "kamon-zipkin" % "1.0.0"
-  lazy val registersApi = "uk.gov.ons" %% "br-api-common" % "1.1"
-  lazy val registersApiTest = "uk.gov.ons" %% "br-api-test-common" % "1.2"
+  lazy val registersApi = "uk.gov.ons" %% "br-api-common" % "1.2"
+  lazy val registersApiTest = "uk.gov.ons" %% "br-api-test-common" % "1.3"
   lazy val scalaMock = "org.scalamock" %% "scalamock" % "4.1.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.0.4"
   lazy val scalaTestPlus = "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2"
   lazy val silencerLib = "com.github.ghik" %% "silencer-lib" % silencerVersion
   lazy val silencerPlugin = "com.github.ghik" %% "silencer-plugin" % silencerVersion
+  lazy val wireMock = "com.github.tomakehurst" % "wiremock" % "2.20.0"
 }
 
 /*

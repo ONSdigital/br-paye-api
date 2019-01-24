@@ -1,12 +1,12 @@
 package uk.gov.ons.br.paye
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder
-import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import play.api.http.HeaderNames.CONTENT_TYPE
-import play.api.http.Status.{BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, NO_CONTENT, NOT_FOUND, UNPROCESSABLE_ENTITY, UNSUPPORTED_MEDIA_TYPE}
+import play.api.http.Status.{BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT, UNPROCESSABLE_ENTITY, UNSUPPORTED_MEDIA_TYPE}
 import play.mvc.Http.MimeTypes.JSON
-import uk.gov.ons.br.paye.EditPayeAcceptanceSpec.{aPayeQuery, anUpdatePayeRequest, EditPayeRef, HBaseCheckAndUpdateUbrnRequestBody, HBasePayeQueryResponseBody, IncorrectUBRN, InvalidJson, InvalidPatch, JsonPatchContentType, NoMatchFoundResponse, TargetUBRN}
+import uk.gov.ons.br.paye.EditPayeAcceptanceSpec.{ClericallyEditedBy, EditPayeRef, HBaseCheckAndUpdateUbrnRequestBody, HBasePayeQueryResponseBody, IncorrectUBRN, InvalidJson, InvalidPatch, JsonPatchContentType, NoMatchFoundResponse, TargetUBRN, UserId, aPayeQuery, anUpdatePayeRequest}
 import uk.gov.ons.br.paye.models.PayeRef
+import uk.gov.ons.br.paye.test.matchers.HBaseRequestWithFuzzyEditHistoryBodyMatcher.{FuzzyValue, aRequestBodyWithFuzzyEditHistoryLike}
 import uk.gov.ons.br.test.hbase.{AbstractServerAcceptanceSpec, HBaseJsonBodyBuilder, HBaseJsonRequestBuilder}
 import uk.gov.ons.br.test.matchers.HttpServerErrorStatusCodeMatcher.aServerError
 
@@ -27,12 +27,12 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       And(s"a Legal Unit exists that is identified by UBRN $TargetUBRN")
       And(s"a database request to update the UBRN from $IncorrectUBRN to $TargetUBRN will succeed")
       stubHBaseFor(anUpdatePayeRequest(withPayeRef = EditPayeRef).
-        withRequestBody(equalToJson(HBaseCheckAndUpdateUbrnRequestBody)).
+        andMatching(aRequestBodyWithFuzzyEditHistoryLike(HBaseCheckAndUpdateUbrnRequestBody)).
         willReturn(anOkResponse()))
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated from $IncorrectUBRN to $TargetUBRN")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -47,12 +47,12 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       And(s"a Legal Unit exists that is identified by UBRN $TargetUBRN")
       And(s"a database request to update the UBRN from $IncorrectUBRN to $TargetUBRN will not succeed because of another user's change")
       stubHBaseFor(anUpdatePayeRequest(withPayeRef = EditPayeRef).
-        withRequestBody(equalToJson(HBaseCheckAndUpdateUbrnRequestBody)).
+        andMatching(aRequestBodyWithFuzzyEditHistoryLike(HBaseCheckAndUpdateUbrnRequestBody)).
         willReturn(aNotModifiedResponse()))
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated from $IncorrectUBRN to $TargetUBRN")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -67,7 +67,7 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
 
       When("a clerical edit of a PAYE unit with a PAYE reference having 13 alphanumeric characters is requested")
       val response = await(wsClient.url(s"/v1/paye/1234567890ABC").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -82,7 +82,7 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated from $IncorrectUBRN to $TargetUBRN")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -97,7 +97,7 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
 
       When(s"a clerical edit of a PAYE admin unit is requested with a content type of $JSON")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JSON).
+        withHttpHeaders(CONTENT_TYPE -> JSON, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -120,7 +120,7 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
 
       When("a clerical edit of a PAYE admin unit is requested with a Json body that requests an 'update' operation")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(InvalidPatch))
 
       Then("a Bad Request response is returned")
@@ -130,7 +130,7 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
     scenario("when the clerical edit specification complies with the Json Patch Specification but requests an unsupported edit") { wsClient =>
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests that the name is updated")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/name", "value": "Big Box Co"},
                   | {"op": "replace", "path": "/name", "value": "Big Box Company"}]""".stripMargin))
 
@@ -143,12 +143,25 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated to a value that is not 16 digits")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "ABC123"}]""".stripMargin))
 
       Then("a Unprocessable Entity response is returned")
       response.status shouldBe UNPROCESSABLE_ENTITY
+    }
+  }
+
+  feature("validate the edit meta data (supplied via request headers)") {
+    scenario("when the user id is unspecified") { wsClient =>
+      When(s"a clerical edit of a PAYE unit is requested without specifying the editing user id")
+      val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
+                  | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
+
+      Then("a Bad Request response is returned")
+      response.status shouldBe BAD_REQUEST
     }
   }
 
@@ -159,7 +172,7 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated from $IncorrectUBRN to $TargetUBRN")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -174,12 +187,12 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       And(s"a Legal Unit exists that is identified by UBRN $TargetUBRN")
       And("the database server will return an error response when a PAYE edit is requested")
       stubHBaseFor(anUpdatePayeRequest(withPayeRef = EditPayeRef).
-        withRequestBody(equalToJson(HBaseCheckAndUpdateUbrnRequestBody)).
+        andMatching(aRequestBodyWithFuzzyEditHistoryLike(HBaseCheckAndUpdateUbrnRequestBody)).
         willReturn(aServiceUnavailableResponse()))
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated from $IncorrectUBRN to $TargetUBRN")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -193,12 +206,12 @@ class EditPayeAcceptanceSpec extends AbstractServerAcceptanceSpec {
       And(s"a Legal Unit exists that is identified by UBRN $TargetUBRN")
       And(s"a database request to update the UBRN from $IncorrectUBRN to $TargetUBRN will succeed")
       stubHBaseFor(anUpdatePayeRequest(withPayeRef = EditPayeRef).
-        withRequestBody(equalToJson(HBaseCheckAndUpdateUbrnRequestBody)).
+        andMatching(aRequestBodyWithFuzzyEditHistoryLike(HBaseCheckAndUpdateUbrnRequestBody)).
         willReturn(anOkResponse()))
 
       When(s"a clerical edit of the PAYE unit with reference ${EditPayeRef.value} requests the UBRN is updated from $IncorrectUBRN to $TargetUBRN")
       val response = await(wsClient.url(s"/v1/paye/${EditPayeRef.value}").
-        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType).
+        withHttpHeaders(CONTENT_TYPE -> JsonPatchContentType, ClericallyEditedBy -> UserId).
         patch(s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"},
                   | {"op": "replace", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin))
 
@@ -217,14 +230,18 @@ private object EditPayeAcceptanceSpec extends HBaseJsonRequestBuilder with HBase
   private val InvalidPatch =
     s"""|[{"op": "test", "path": "/links/ubrn", "value": "$IncorrectUBRN"}
         | {"op": "update", "path": "/links/ubrn", "value": "$TargetUBRN"}]""".stripMargin  // no such 'op'
-  private val ColumnFamily = "d"
+  private val DataColumnFamily = "d"
+  private val EditHistoryColumnFamily = "h"
   private val ParentLinkQualifier = "ubrn"
+  private val ClericallyEditedBy = "X-User-Id"
+  private val UserId = "jdoe"
 
   private val HBaseCheckAndUpdateUbrnRequestBody =
     aBodyWith(
       aRowWith(key = EditPayeRef.value,
-        aColumnWith(ColumnFamily, qualifier = ParentLinkQualifier, value = TargetUBRN, timestamp = None),
-        aColumnWith(ColumnFamily, qualifier = ParentLinkQualifier, value = IncorrectUBRN, timestamp = None)
+        aColumnWith(DataColumnFamily, qualifier = ParentLinkQualifier, value = TargetUBRN, timestamp = None),
+        aColumnWith(EditHistoryColumnFamily, qualifier = FuzzyValue, value = s"$UserId~$FuzzyValue~$IncorrectUBRN~$TargetUBRN", timestamp = None),
+        aColumnWith(DataColumnFamily, qualifier = ParentLinkQualifier, value = IncorrectUBRN, timestamp = None)
       )
     )
 
@@ -232,13 +249,13 @@ private object EditPayeAcceptanceSpec extends HBaseJsonRequestBuilder with HBase
     aBodyWith(
       aRowWith(key = EditPayeRef.value,
         // admin data
-        aColumnWith(ColumnFamily, qualifier = "payeref", value = EditPayeRef.value),
-        aColumnWith(ColumnFamily, qualifier = "legalstatus", value = "A"),
-        aColumnWith(ColumnFamily, qualifier = "nameline1", value = "VDEPJ0IVE5"),
-        aColumnWith(ColumnFamily, qualifier = "address1", value = "VFHLNA0MSJ"),
-        aColumnWith(ColumnFamily, qualifier = "postcode", value = "K6ZL 4GL"),
+        aColumnWith(DataColumnFamily, qualifier = "payeref", value = EditPayeRef.value),
+        aColumnWith(DataColumnFamily, qualifier = "legalstatus", value = "A"),
+        aColumnWith(DataColumnFamily, qualifier = "nameline1", value = "VDEPJ0IVE5"),
+        aColumnWith(DataColumnFamily, qualifier = "address1", value = "VFHLNA0MSJ"),
+        aColumnWith(DataColumnFamily, qualifier = "postcode", value = "K6ZL 4GL"),
         // link data
-        aColumnWith(ColumnFamily, qualifier = "ubrn", value = IncorrectUBRN)
+        aColumnWith(DataColumnFamily, qualifier = "ubrn", value = IncorrectUBRN)
       )
     )
 
